@@ -2,6 +2,7 @@
 {% block title %}Об авторе проекта{% endblock %}
 {% block content %}
 {% load user_filters %}
+{% load static %}
   <main role="main" class="container">
     <div class="row">
       <!-- Левый вспомогательный блок -->
@@ -16,7 +17,8 @@
               </li>
               <li class="list-group-item">
                 <div class="h6 text-muted">
-                  Полезный короткий текст
+                  <img class="w-50 mx-auto d-block" src="{% static 'about/photo.jpg' %}" alt="Фото автора" width="200" height="160">
+                  Начинающий программист, подающий большие надежды
                 </div>
               </li>
             </ul>                                               
