@@ -5,12 +5,16 @@ from django.urls import reverse
 User = get_user_model()
 
 
-class PostPagesTests(TestCase):
+class PostPagesInfoTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.user = User.objects.create_user(username='name')
+
     def setUp(self):
         self.guest_client = Client()
-        self.user = User.objects.create_user(username='name')
         self.authorized_client = Client()
-        self.authorized_client.force_login(self.user)
+        self.authorized_client.force_login(PostPagesInfoTests.user)
 
     def test_pages_use_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""

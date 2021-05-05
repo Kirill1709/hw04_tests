@@ -5,15 +5,21 @@ User = get_user_model()
 
 
 class PostURLTests(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.public_urls = (
+            '/about/author/',
+            '/about/tech/',
+        )
+
     def setUp(self):
         self.guest_client = Client()
 
     def test_home_url_exists_at_desired_location(self):
-        """Страница /about/author/ доступна любому пользователю."""
-        response = self.guest_client.get('/about/author/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_task_added_url_exists_at_desired_location(self):
-        """Страница /about/tech/ доступна любому пользователю."""
-        response = self.guest_client.get('/about/tech/')
-        self.assertEqual(response.status_code, 200)
+        """Страница /about/author/ и /about/tech/
+        доступна любому пользователю."""
+        for url in self.public_urls:
+            with self.subTest(url=url):
+                response = self.guest_client.get(url)
+                self.assertEqual(response.status_code, 200)

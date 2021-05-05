@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
-from posts.models import Group, Post
+
+from ..models import Group, Post
 
 User = get_user_model()
 
@@ -9,17 +10,18 @@ class PostModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
+        cls.user = User.objects.create_user(
+            username="name",
+            email="email@mail.com", password="Pass12345")
         cls.post = Post.objects.create(
             text='Тестовый текст',
-            author=User.objects.create_user(username="name",
-                                            email="email@mail.com",
-                                            password="Pass12345")
+            author=cls.user,
         )
 
-    def test_object_name_is_title_field(self):
+    def test_object_post_name_is_title_field(self):
         post = PostModelTest.post
-        expected_object_name = post.text[:15]
-        self.assertEquals(expected_object_name, str(post))
+        expected_object_name = post.text
+        self.assertEqual(expected_object_name, str(post))
 
 
 class GroupModelTest(TestCase):
@@ -30,7 +32,7 @@ class GroupModelTest(TestCase):
             title='Тестовый текст'
         )
 
-    def test_object_name_is_title_field(self):
+    def test_object_group_name_is_title_field(self):
         group = GroupModelTest.group
         expected_object_name = group.title
         self.assertEquals(expected_object_name, str(group))

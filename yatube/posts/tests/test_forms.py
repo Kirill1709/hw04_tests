@@ -4,7 +4,8 @@ from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
 from django.urls import reverse
 from posts.forms import PostForm
-from posts.models import Group, Post
+
+from ..models import Group, Post
 
 User = get_user_model()
 
@@ -15,7 +16,6 @@ class PostFormTests(TestCase):
         super().setUpClass()
         Post.objects.create(
             text='Тестовый текст',
-            pub_date=dt.datetime.today(),
             author=User.objects.create_user(username="name",
                                             email="email@mail.com",
                                             password="Pass12345"),

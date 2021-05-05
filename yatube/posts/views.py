@@ -6,64 +6,74 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .forms import PostForm
 from .models import Group, Post
 
+COUNT_POSTS = 10
 User = get_user_model()
 
 
 def index(request):
-    latest = Post.objects.all().order_by('-pub_date')
-    paginator = Paginator(latest, 10)
+    latest = Post.objects.all()
+    paginator = Paginator(latest, COUNT_POSTS)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    return render(request, 'index.html', {'page': page, })
+    return render(request, 'posts/index.html', {'page': page})
 
 
 def group_posts(request, slug):
     group = get_object_or_404(Group, slug=slug)
     posts = group.posts.all()
-    paginator = Paginator(posts, 10)
+    paginator = Paginator(posts, COUNT_POSTS)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    return render(request, "group.html", {"group": group, "page": page})
+    return render(request, "posts/group.html", {"group": group, "page": page})
 
 
 @login_required
 def new_post(request):
     form = PostForm(request.POST or None)
+    is_new = True
     if form.is_valid():
         comment = form.save(commit=False)
         comment.author = request.user
         comment.save()
         return redirect("posts:index")
-    return render(request, "new_post.html", {"form": form})
+    return render(
+        request, "posts/new_post.html",
+        {"form": form, "is_new": is_new})
 
 
 def profile(request, username):
-    post = get_object_or_404(User, username=username)
-    user_posts = post.posts.all()
-    user_posts_count = post.posts.all().count()
-    paginator = Paginator(user_posts, 10)
+    user_profile = get_object_or_404(User, username=username)
+    user_posts = user_profile.posts.all()
+    paginator = Paginator(user_posts, COUNT_POSTS)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    return render(request, 'profile.html', {'page': page,
-                  'user_posts_count': user_posts_count, 'post': post})
+    return render(
+        request, 'posts/profile.html',
+        {'page': page, 'user_posts': user_posts,
+         'user_profile': user_profile})
 
 
 def post_view(request, username, post_id):
-    user = User.objects.get(username=username)
-    post = Post.objects.get(id=post_id)
-    posts_count = user.posts.all().count()
-    author = post.author
-    return render(request, 'post.html', {'post': post, 'author': author,
-                  'posts_count': posts_count})
+    user_profile = User.objects.get(username=username)
+    posts = get_object_or_404(Post, id=post_id, author__username=username)
+    user_posts = user_profile.posts
+    author = posts.author
+    return render(
+        request, 'posts/post.html',
+        {'posts': posts, 'author': author,
+         'user_posts': user_posts, 'user_profile': user_profile})
 
 
 @login_required
 def post_edit(request, username, post_id):
     post = get_object_or_404(Post, id=post_id, author__username=username)
-    form = PostForm(request.POST or None, instance=post)
+    is_edit = True
     if request.user != post.author:
-        return redirect('posts:post', username, post_id)
+        return redirect('posts:post_view', username, post_id)
+    form = PostForm(request.POST or None, instance=post)
     if form.is_valid():
         form.save()
-        return redirect('posts:post', username, post_id)
-    return render(request, 'new_post.html', {"form": form, "post": post})
+        return redirect('posts:post_view', username, post_id)
+    return render(
+        request, 'posts/new_post.html',
+        {"form": form, "post": post, "is_edit": is_edit})

@@ -1,6 +1,9 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.test import Client, TestCase
-from posts.models import Group, Post
+
+from ..models import Group, Post
 
 User = get_user_model()
 
@@ -9,96 +12,90 @@ class PostURLTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        # Создадим запись в БД для проверки доступности адреса task/test-slug/
+        cls.user_1 = User.objects.create_user(username="name")
+        cls.user_2 = User.objects.create_user(username="name2")
         cls.post_1 = Post.objects.create(
             text='Тестовый текст',
-            author=User.objects.create_user(username="name"),
+            author=cls.user_1,
             group=Group.objects.create(title="testgroup", slug='test-slug',
                                        description='Описание')
         )
         cls.post_2 = Post.objects.create(
             text='Тестовый текст2',
-            author=User.objects.create_user(username="name2"),
+            author=cls.user_2,
             group=Group.objects.create(title="testgroup2", slug='test-slug2',
                                        description='Описание2')
         )
+        cls.url_guest_user = (
+            '/',
+            '/group/test-slug/',
+            '/name/',
+            '/name/1/',
+        )
+        cls.url_authorized_user = (
+            '/new/',
+            '/name/1/edit/',
+        )
+        cls.url_redirect_anonymous = {
+            '/new/': '/auth/login/?next=/new/',
+            '/name/1/edit/': '/auth/login/?next=/name/1/edit/',
+        }
+        cls.templates_url_authorized_client = {
+            '/new/': 'new_post.html',
+            '/name/1/edit/': 'new_post.html',
+        }
+        cls.templates_url_guest_client = {
+            '/': 'index.html',
+            '/group/test-slug/': 'group.html',
+            '/name/': 'profile.html',
+            '/name/1/': 'post.html',
+        }
 
     def setUp(self):
-        # Создаем неавторизованный клиент
         self.guest_client = Client()
-        # Создаем пользователя
-        self.user = User.objects.get(username='name')
-        # Создаем второй клиент
         self.authorized_client = Client()
-        # Авторизуем пользователя
-        self.authorized_client.force_login(self.user)
+        self.authorized_client.force_login(PostURLTests.user_1)
 
-    def test_home_url_exists_at_desired_location(self):
+    def test_url_guest_user_exists_at_desired_location(self):
         """Страница / доступна любому пользователю."""
-        response = self.guest_client.get('/')
-        self.assertEqual(response.status_code, 200)
+        for url in self.url_guest_user:
+            with self.subTest(url=url):
+                response = self.guest_client.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
-    def test_task_added_url_exists_at_desired_location(self):
-        """Страница /group/<slug>/ доступна любому пользователю."""
-        response = self.guest_client.get('/group/test-slug/')
-        self.assertEqual(response.status_code, 200)
-
-    # Проверяем доступность страниц для авторизованного пользователя
     def test_task_list_url_exists_at_desired_location(self):
         """Страница /new/ доступна авторизованному пользователю."""
-        response = self.authorized_client.get('/new/')
-        self.assertEqual(response.status_code, 200)
-
-    # Проверяем редиректы для неавторизованного пользователя
-    def test_task_list_url_redirect_anonymous(self):
-        """Страница /new/ перенаправляет анонимного пользователя."""
-        response = self.guest_client.get('/new/', follow=True)
-        self.assertRedirects(
-            response, ('/auth/login/?next=/new/'))
-
-    def test_username_url_exists_at_desired_location(self):
-        """Страница /<username>/ доступна любому пользователю."""
-        response = self.guest_client.get('/name/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_username_post_id_url_exists_at_desired_location(self):
-        """Страница /<username>/<post_id> доступна любому пользователю."""
-        response = self.guest_client.get('/name/1/')
-        self.assertEqual(response.status_code, 200)
+        for url in self.url_authorized_user:
+            with self.subTest(url=url):
+                response = self.authorized_client.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_anonimus_post_edit_url_exists_at_desired_location(self):
-        """Страница /<username>/<post_id>/edit
-        доступна анонимному пользователю."""
-        response = self.guest_client.get('/name/1/edit/')
-        self.assertEqual(response.status_code, 302)
-
-    def test_author_post_edit_url_exists_at_desired_location(self):
-        """Страница /<username>/<post_id>/edit доступна автору поста."""
-        response = self.authorized_client.get('/name/1/edit/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_not_author_post_edit_url_exists_at_desired_location(self):
-        """Страница /<username>/<post_id>/edit доступна автору поста."""
-        response = self.authorized_client.get('/name2/2/edit/')
-        self.assertEqual(response.status_code, 302)
+        """Страницы не доступны анонимному пользователю(редирект)."""
+        for url, url_redirect in self.url_redirect_anonymous.items():
+            with self.subTest(url=url):
+                response = self.guest_client.get(url, follow=True)
+                self.assertRedirects(response, url_redirect)
 
     def test_anonimus_redirect_post_edit_url_exists_at_desired_location(self):
-        """Страница /<username>/<post_id>/edit/ доступна
-        анонимному пользователю."""
+        """Страница /<username>/<post_id>/edit/ не доступна
+        не автору поста."""
         response = self.authorized_client.get('/name2/2/edit/')
         self.assertRedirects(
             response, ('/name2/2/'))
 
-    def test_urls_uses_correct_template(self):
-        """URL-адрес использует соответствующий шаблон."""
-        # Шаблоны по адресам
-        templates_url_names = {
-            '/': 'index.html',
-            '/group/test-slug/': 'group.html',
-            '/new/': 'new_post.html',
-            '/name/1/edit/': 'new_post.html',
-        }
-        for adress, template in templates_url_names.items():
+    def test_urls_authorized_client_uses_correct_template(self):
+        """URL-адрес использует соответствующий шаблон
+        авторизованного пользователя."""
+        for adress, template in self.templates_url_authorized_client.items():
             with self.subTest(adress=adress):
                 response = self.authorized_client.get(adress)
+                self.assertTemplateUsed(response, template)
+
+    def test_urls_guest_client_uses_correct_template(self):
+        """URL-адрес использует соответствующий шаблон
+        анонимного пользователя."""
+        for adress, template in self.templates_url_guest_client.items():
+            with self.subTest(adress=adress):
+                response = self.guest_client.get(adress)
                 self.assertTemplateUsed(response, template)
