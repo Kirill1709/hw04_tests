@@ -41,10 +41,10 @@ class PostPagesTests(TestCase):
                     kwargs={'username': 'name'}): 'profile',
         }
         cls.templates_pages_names = {
-            reverse('posts:index'): 'posts/index.html',
+            reverse('posts:index'): 'index.html',
             reverse('posts:group_posts',
-                    kwargs={'slug': 'test-slug'}): 'posts/group.html',
-            reverse('posts:new_post'): 'posts/new_post.html',
+                    kwargs={'slug': 'test-slug'}): 'group.html',
+            reverse('posts:new_post'): 'new_post.html',
         }
 
     def setUp(self):
