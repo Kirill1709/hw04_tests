@@ -40,7 +40,6 @@ class PostFormTests(TestCase):
             'author': self.user,
             'group': self.group.id,
         }
-        # Отправляем POST-запрос
         response = self.authorized_client.post(
             reverse('posts:new_post'),
             data=form_data,
@@ -56,7 +55,7 @@ class PostFormTests(TestCase):
         )
 
     def test_change_post(self):
-        """Валидная форма создает запись в Post."""
+        """Валидная форма редактирует запись в Post."""
         posts_count = Post.objects.count()
         form_data = {
             'text': 'Тестовый текст3',

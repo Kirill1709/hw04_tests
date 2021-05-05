@@ -15,7 +15,7 @@ def index(request):
     paginator = Paginator(latest, COUNT_POSTS)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    return render(request, 'posts/index.html', {'page': page})
+    return render(request, 'index.html', {'page': page})
 
 
 def group_posts(request, slug):
@@ -24,7 +24,7 @@ def group_posts(request, slug):
     paginator = Paginator(posts, COUNT_POSTS)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    return render(request, "posts/group.html", {"group": group, "page": page})
+    return render(request, "group.html", {"group": group, "page": page})
 
 
 @login_required
@@ -37,7 +37,7 @@ def new_post(request):
         comment.save()
         return redirect("posts:index")
     return render(
-        request, "posts/new_post.html",
+        request, "new_post.html",
         {"form": form, "is_new": is_new})
 
 
@@ -48,7 +48,7 @@ def profile(request, username):
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
     return render(
-        request, 'posts/profile.html',
+        request, 'profile.html',
         {'page': page, 'user_posts': user_posts,
          'user_profile': user_profile})
 
@@ -59,7 +59,7 @@ def post_view(request, username, post_id):
     user_posts = user_profile.posts
     author = posts.author
     return render(
-        request, 'posts/post.html',
+        request, 'post.html',
         {'posts': posts, 'author': author,
          'user_posts': user_posts, 'user_profile': user_profile})
 
@@ -75,5 +75,5 @@ def post_edit(request, username, post_id):
         form.save()
         return redirect('posts:post_view', username, post_id)
     return render(
-        request, 'posts/new_post.html',
+        request, 'new_post.html',
         {"form": form, "post": post, "is_edit": is_edit})

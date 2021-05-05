@@ -16,7 +16,7 @@ class PostURLTests(TestCase):
     def setUp(self):
         self.guest_client = Client()
 
-    def test_home_url_exists_at_desired_location(self):
+    def test_anonymous_user_has_access_to_the_addresses(self):
         """Страница /about/author/ и /about/tech/
         доступна любому пользователю."""
         for url in self.public_urls:

@@ -57,14 +57,14 @@ class PostURLTests(TestCase):
         self.authorized_client.force_login(PostURLTests.user_1)
 
     def test_url_guest_user_exists_at_desired_location(self):
-        """Страница / доступна любому пользователю."""
+        """Страницы в словаре доступны любому пользователю."""
         for url in self.url_guest_user:
             with self.subTest(url=url):
                 response = self.guest_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_task_list_url_exists_at_desired_location(self):
-        """Страница /new/ доступна авторизованному пользователю."""
+        """Страницы в словаре доступны авторизованному пользователю."""
         for url in self.url_authorized_user:
             with self.subTest(url=url):
                 response = self.authorized_client.get(url)
