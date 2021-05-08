@@ -40,7 +40,7 @@ class PostPagesTests(TestCase):
             reverse('posts:profile',
                     kwargs={'username': cls.user.username}): 'profile',
         }
-        cls.templates_pages_names = {
+        cls.templates_pages = {
             reverse('posts:index'): 'posts/index.html',
             reverse('posts:group_posts',
                     kwargs={'slug': cls.group.slug}): 'group.html',
@@ -69,7 +69,7 @@ class PostPagesTests(TestCase):
 
     def test_pages_use_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
-        for reverse_name, template in PostPagesTests.templates_pages_names.items(): # noqa
+        for reverse_name, template in PostPagesTests.templates_pages.items():
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
