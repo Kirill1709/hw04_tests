@@ -21,7 +21,7 @@ class PostModelTest(TestCase):
     def test_object_post_name_is_title_field(self):
         post = PostModelTest.post
         expected_object_name = post.text
-        self.assertEqual(expected_object_name, str(post))
+        self.assertEqual(str(post), expected_object_name)
 
 
 class GroupModelTest(TestCase):
@@ -35,4 +35,4 @@ class GroupModelTest(TestCase):
     def test_object_group_name_is_title_field(self):
         group = GroupModelTest.group
         expected_object_name = group.title
-        self.assertEquals(expected_object_name, str(group))
+        self.assertEquals(str(group), expected_object_name)

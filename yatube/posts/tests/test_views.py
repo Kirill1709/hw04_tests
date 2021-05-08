@@ -23,12 +23,12 @@ class PostPagesTests(TestCase):
             title="testgroup",
             slug='test-slug',
             description='Описание')
-        Post.objects.create(
+        cls.post_2 = Post.objects.create(
             text='Тестовый текст2',
             author=User.objects.get(username="name"),
             group=cls.group_2
         )
-        Post.objects.create(
+        cls.post_1 = Post.objects.create(
             text='Тестовый текст1',
             author=User.objects.get(username="name"),
             group=cls.group
@@ -36,15 +36,15 @@ class PostPagesTests(TestCase):
         cls.response_name = {
             reverse('posts:index'): 'index',
             reverse('posts:group_posts',
-                    kwargs={'slug': 'test-slug'}): 'group',
+                    kwargs={'slug': cls.group.slug}): 'group',
             reverse('posts:profile',
-                    kwargs={'username': 'name'}): 'profile',
+                    kwargs={'username': cls.user.username}): 'profile',
         }
         cls.templates_pages_names = {
-            reverse('posts:index'): 'index.html',
+            reverse('posts:index'): 'posts/index.html',
             reverse('posts:group_posts',
-                    kwargs={'slug': 'test-slug'}): 'group.html',
-            reverse('posts:new_post'): 'new_post.html',
+                    kwargs={'slug': cls.group.slug}): 'group.html',
+            reverse('posts:new_post'): 'posts/new_post.html',
         }
 
     def setUp(self):
@@ -52,24 +52,24 @@ class PostPagesTests(TestCase):
         self.authorized_client = Client()
         self.authorized_client.force_login(PostPagesTests.user)
 
-    def equal_fields(self, first_object, expected_text, expected_group):
+    def checks_the_fields_of_the_post(self, post, expected_post):
         """Проверка ожидаемых и действительных значений."""
-        post_text_0 = first_object.text
-        post_pub_date_0 = (first_object.pub_date).replace(
+        post_text_0 = expected_post.text
+        post_pub_date_0 = (expected_post.pub_date).replace(
             microsecond=0)
-        post_author_0 = first_object.author
-        post_group_0 = first_object.group
-        self.assertEqual(post_text_0, expected_text),
+        post_author_0 = expected_post.author
+        post_group_0 = expected_post.group
+        self.assertEqual(post_text_0, post.text),
         self.assertEqual(
             post_pub_date_0,
             dt.datetime.today().replace(
                 microsecond=0)),
         self.assertEqual(post_author_0, self.user),
-        self.assertEqual(post_group_0, expected_group)
+        self.assertEqual(post_group_0, post.group)
 
     def test_pages_use_correct_template(self):
         """URL-адрес использует соответствующий шаблон."""
-        for reverse_name, template in self.templates_pages_names.items():
+        for reverse_name, template in PostPagesTests.templates_pages_names.items(): # noqa
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
@@ -94,13 +94,12 @@ class PostPagesTests(TestCase):
         """Шаблон index и group сформирован с правильным контекстом,
         а также проверка отображения созданного поста на главной
          странице и в группе"""
-        for reverse_name, template in self.response_name.items():
+        for reverse_name, template in PostPagesTests.response_name.items():
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
-                first_object = response.context['page'][0]
-                expected_text = 'Тестовый текст1'
-                expected_group = self.group
-                self.equal_fields(first_object, expected_text, expected_group)
+                post = response.context['page'][0]
+                expected_post = self.post_1
+                self.checks_the_fields_of_the_post(post, expected_post)
 
     def test_post_detail_pages_show_correct_context(self):
         """Шаблон group сформирован с правильным контекстом."""
@@ -108,19 +107,17 @@ class PostPagesTests(TestCase):
             reverse('posts:post_edit', kwargs={'username': 'name',
                                                'post_id': '1'})
         )
-        first_object = response.context['post']
-        expected_text = 'Тестовый текст2'
-        expected_group = self.group_2
-        self.equal_fields(first_object, expected_text, expected_group)
+        post = response.context['post']
+        expected_post = self.post_2
+        self.checks_the_fields_of_the_post(post, expected_post)
 
     def test_post_not_equal_show_correct_context(self):
         """Проверка поста, не принадлежащего данной группе."""
         response = self.authorized_client.get(
             reverse('posts:group_posts', kwargs={'slug': 'test-slug2'}))
-        first_object = response.context['page'][0]
-        expected_text = 'Тестовый текст2'
-        expected_group = self.group_2
-        self.equal_fields(first_object, expected_text, expected_group)
+        post = response.context['page'][0]
+        expected_post = self.post_2
+        self.checks_the_fields_of_the_post(post, expected_post)
 
 
 class PaginatorViewsTest(TestCase):
@@ -136,52 +133,13 @@ class PaginatorViewsTest(TestCase):
             title="testgroup",
             slug='test-slug',
             description='Описание')
-        Post.objects.bulk_create([
-            Post(
-                text='Тестовый текст1',
-                author=cls.user,
-                group=cls.group_2),
-            Post(
-                text='Тестовый текст2',
-                author=cls.user,
-                group=cls.group_2),
-            Post(
-                text='Тестовый текст3',
-                author=cls.user,
-                group=cls.group_2),
-            Post(
-                text='Тестовый текст4',
-                author=cls.user,
-                group=cls.group_2),
-            Post(
-                text='Тестовый текст5',
-                author=cls.user,
-                group=cls.group_2),
-            Post(
-                text='Тестовый текст6',
-                author=cls.user,
-                group=cls.group_2),
-            Post(
-                text='Тестовый текст7',
-                author=cls.user,
-                group=cls.group_2),
-            Post(
-                text='Тестовый текст8',
-                author=cls.user,
-                group=cls.group_2),
-            Post(
-                text='Тестовый текст9',
-                author=cls.user,
-                group=cls.group_2),
-            Post(
-                text='Тестовый текст10',
-                author=cls.user,
-                group=cls.group_2),
-            Post(
-                text='Тестовый текст11',
-                author=cls.user,
-                group=cls.group_2),
-        ])
+        posts = []
+        for i in range(1, 12):
+            post = Post(text=f'Тестовый текст{i}',
+                        author=cls.user,
+                        group=cls.group_2)
+            posts.append(post)
+        Post.objects.bulk_create(posts)
 
     def setUp(self):
         self.guest_client = Client()

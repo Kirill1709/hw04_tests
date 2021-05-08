@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Последние обновления на сайте{% endblock %}
+{% block title %}Пост пользователся {{ user_profile.username }}{% endblock %}
 {% block content %}
 {% load user_filters %}
 
@@ -9,9 +9,9 @@
 
         <div class="col-md-9">
 
-                {% include "includes/post_card.html" %}
-     </div>
+            {% include "includes/post_card.html" %}
+        </div>
     </div>
-</main> 
+</main>
 
-{% endblock %} 
+{% endblock %}

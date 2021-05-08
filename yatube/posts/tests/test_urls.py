@@ -14,41 +14,34 @@ class PostURLTests(TestCase):
         super().setUpClass()
         cls.user_1 = User.objects.create_user(username="name")
         cls.user_2 = User.objects.create_user(username="name2")
+        cls.group_1 = Group.objects.create(
+            title="testgroup",
+            slug='test-slug',
+            description='Описание')
+        cls.group_2 = Group.objects.create(
+            title="testgroup2",
+            slug='test-slug2',
+            description='Описание2')
         cls.post_1 = Post.objects.create(
             text='Тестовый текст',
             author=cls.user_1,
-            group=Group.objects.create(title="testgroup", slug='test-slug',
-                                       description='Описание')
+            group=cls.group_1
         )
         cls.post_2 = Post.objects.create(
             text='Тестовый текст2',
             author=cls.user_2,
-            group=Group.objects.create(title="testgroup2", slug='test-slug2',
-                                       description='Описание2')
+            group=cls.group_2
         )
-        cls.url_guest_user = (
-            '/',
-            '/group/test-slug/',
-            '/name/',
-            '/name/1/',
-        )
-        cls.url_authorized_user = (
-            '/new/',
-            '/name/1/edit/',
-        )
-        cls.url_redirect_anonymous = {
-            '/new/': '/auth/login/?next=/new/',
-            '/name/1/edit/': '/auth/login/?next=/name/1/edit/',
-        }
         cls.templates_url_authorized_client = {
-            '/new/': 'new_post.html',
-            '/name/1/edit/': 'new_post.html',
+            '/new/': 'posts/new_post.html',
+            f'/{cls.user_1.username}/{cls.post_1.id}/edit/':
+            'posts/new_post.html',
         }
         cls.templates_url_guest_client = {
-            '/': 'index.html',
-            '/group/test-slug/': 'group.html',
-            '/name/': 'profile.html',
-            '/name/1/': 'post.html',
+            '/': 'posts/index.html',
+            f'/group/{cls.group_1.slug}/': 'group.html',
+            f'/{cls.user_1.username}/': 'posts/profile.html',
+            f'/{cls.user_1.username}/{cls.post_1.id}/': 'posts/post.html',
         }
 
     def setUp(self):
@@ -58,24 +51,24 @@ class PostURLTests(TestCase):
 
     def test_url_guest_user_exists_at_desired_location(self):
         """Страницы в словаре доступны любому пользователю."""
-        for url in self.url_guest_user:
+        for url in self.templates_url_guest_client:
             with self.subTest(url=url):
                 response = self.guest_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_task_list_url_exists_at_desired_location(self):
         """Страницы в словаре доступны авторизованному пользователю."""
-        for url in self.url_authorized_user:
+        for url in self.templates_url_authorized_client:
             with self.subTest(url=url):
                 response = self.authorized_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_anonimus_post_edit_url_exists_at_desired_location(self):
         """Страницы не доступны анонимному пользователю(редирект)."""
-        for url, url_redirect in self.url_redirect_anonymous.items():
+        for url in self.templates_url_authorized_client:
             with self.subTest(url=url):
                 response = self.guest_client.get(url, follow=True)
-                self.assertRedirects(response, url_redirect)
+                self.assertRedirects(response, (f'/auth/login/?next={url}'))
 
     def test_anonimus_redirect_post_edit_url_exists_at_desired_location(self):
         """Страница /<username>/<post_id>/edit/ не доступна

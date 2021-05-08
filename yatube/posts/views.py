@@ -11,11 +11,11 @@ User = get_user_model()
 
 
 def index(request):
-    latest = Post.objects.all()
-    paginator = Paginator(latest, COUNT_POSTS)
+    posts = Post.objects.all()
+    paginator = Paginator(posts, COUNT_POSTS)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
-    return render(request, 'index.html', {'page': page})
+    return render(request, 'posts/index.html', {'page': page})
 
 
 def group_posts(request, slug):
@@ -30,44 +30,37 @@ def group_posts(request, slug):
 @login_required
 def new_post(request):
     form = PostForm(request.POST or None)
-    is_new = True
     if form.is_valid():
         comment = form.save(commit=False)
         comment.author = request.user
         comment.save()
         return redirect("posts:index")
     return render(
-        request, "new_post.html",
-        {"form": form, "is_new": is_new})
+        request, "posts/new_post.html",
+        {"form": form, "is_new": True})
 
 
 def profile(request, username):
     user_profile = get_object_or_404(User, username=username)
-    user_posts = user_profile.posts.all()
-    paginator = Paginator(user_posts, COUNT_POSTS)
+    paginator = Paginator(user_profile.posts.all(), COUNT_POSTS)
     page_number = request.GET.get('page')
     page = paginator.get_page(page_number)
     return render(
-        request, 'profile.html',
-        {'page': page, 'user_posts': user_posts,
-         'user_profile': user_profile})
+        request, 'posts/profile.html',
+        {'page': page, 'user_profile': user_profile})
 
 
 def post_view(request, username, post_id):
+    post = get_object_or_404(Post, id=post_id, author__username=username)
     user_profile = User.objects.get(username=username)
-    posts = get_object_or_404(Post, id=post_id, author__username=username)
-    user_posts = user_profile.posts
-    author = posts.author
     return render(
-        request, 'post.html',
-        {'posts': posts, 'author': author,
-         'user_posts': user_posts, 'user_profile': user_profile})
+        request, 'posts/post.html',
+        {'post': post, 'user_profile': user_profile})
 
 
 @login_required
 def post_edit(request, username, post_id):
     post = get_object_or_404(Post, id=post_id, author__username=username)
-    is_edit = True
     if request.user != post.author:
         return redirect('posts:post_view', username, post_id)
     form = PostForm(request.POST or None, instance=post)
@@ -75,5 +68,5 @@ def post_edit(request, username, post_id):
         form.save()
         return redirect('posts:post_view', username, post_id)
     return render(
-        request, 'new_post.html',
-        {"form": form, "post": post, "is_edit": is_edit})
+        request, 'posts/new_post.html',
+        {"form": form, "post": post, "is_edit": False})
