@@ -94,7 +94,7 @@ class PostPagesTests(TestCase):
         """Шаблон index и group сформирован с правильным контекстом,
         а также проверка отображения созданного поста на главной
          странице и в группе"""
-        for reverse_name, template in PostPagesTests.response_name.items():
+        for reverse_name, _ in PostPagesTests.response_name.items():
             with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
                 post = response.context['page'][0]
@@ -133,12 +133,15 @@ class PaginatorViewsTest(TestCase):
             title="testgroup",
             slug='test-slug',
             description='Описание')
-        posts = []
-        for i in range(1, 12):
-            post = Post(text=f'Тестовый текст{i}',
-                        author=cls.user,
-                        group=cls.group_2)
-            posts.append(post)
+        posts = [Post(
+            text=f'Тестовый текст{i}',
+            author=cls.user,
+            group=cls.group_2) for i in range(1, 12)]
+        # for i in range(1, 12):
+        #     post = Post(text=f'Тестовый текст{i}',
+        #                 author=cls.user,
+        #                 group=cls.group_2)
+        #     posts.append(post)
         Post.objects.bulk_create(posts)
 
     def setUp(self):

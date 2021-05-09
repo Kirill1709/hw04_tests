@@ -52,7 +52,7 @@ def profile(request, username):
 
 def post_view(request, username, post_id):
     post = get_object_or_404(Post, id=post_id, author__username=username)
-    user_profile = User.objects.get(username=username)
+    user_profile = post.author
     return render(
         request, 'posts/post.html',
         {'post': post, 'user_profile': user_profile})
@@ -69,4 +69,4 @@ def post_edit(request, username, post_id):
         return redirect('posts:post_view', username, post_id)
     return render(
         request, 'posts/new_post.html',
-        {"form": form, "post": post, "is_edit": False})
+        {"form": form, "post": post, "is_new": False})

@@ -1,11 +1,5 @@
 {% extends "base.html" %}
-{% block title %}
-{% if is_new %}
-Новый пост
-{% else %}
-Редактирование
-{% endif %}
-{% endblock %}
+{% block title %}{{ is_new|yesno:"Новый пост,Редактирование" }}{% endblock %}
 {% block content %}
 {% load user_filters %}
 
@@ -14,11 +8,7 @@
         <div class="card">
             
             <div class="card-header">
-                {% if is_new %} 
-                    Новый пост
-                {% else %}
-                    Редактирование поста
-                {% endif %}
+                {{ is_new|yesno:"Новый пост,Редактировать" }}
                 </div>
             <div class="card-body">
             
@@ -45,11 +35,7 @@
 
                         <div class="col-md-6 offset-md-4">
                             <button type="submit" class="btn btn-primary">
-                            {% if is_new %}
-                                Создать
-                            {% else %}
-                                Сохранить
-                            {% endif %}
+                                {{ is_new|yesno:"Создать,Сохранить" }}
                             </button>
                         </div>
                     </form>
